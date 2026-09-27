@@ -53,7 +53,7 @@ main_script, tail = rest[:main_end], rest[main_end:]
 markup = rep(markup, '<title>PD2 · Spawn research lab</title>',
     '<title>PD2 Spawn Simulator</title>\n<link rel="preconnect" href="https://fonts.googleapis.com">\n'
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
-    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Almendra:ital,wght@0,400;0,700;1,400&family=Silkscreen:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">', where='title')
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Cinzel:wght@500;700&family=Silkscreen:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">', where='title')
 a = markup.index('<style>') + len('<style>')
 b = markup.index('</style>', a)
 markup = markup[:a] + theme + markup[b:]
