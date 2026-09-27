@@ -42,25 +42,69 @@ function label(ctx, text, x, y){
   ctx.fillStyle = '#e6d39a'; ctx.fillText(text, x, y);
   ctx.restore();
 }
-function legend(m){
+function legend(m, hasRoute, routeCovered, spawnCount, routeRetrace){
   const el = document.getElementById('mapMarkerLegend'); if (!el) return;
-  const key = m ? m.id + (m.custom_geometry ? ':custom' : '') : '';
+  const choice = window.PD2ClearSettings ? window.PD2ClearSettings() : { target: 90, radius: 35 };
+  const key = m ? m.id + (m.custom_geometry ? ':custom' : '') + ':' + choice.target + ':' + choice.radius + ':' + (hasRoute ? Math.round((routeCovered || 0) * 100) : 0) + (routeRetrace ? ':re' : '') : '';
   if (el.dataset.key === key) return; el.dataset.key = key;
   const k = m && !m.custom_geometry && window.PD2MapMarkers[m.id];
   const bosses = k ? k.boss.map(b => b.name) : [], inferred = k && k.boss.some(b => b.inferred);
   el.replaceChildren();
   const item = (cls, text) => { const s = document.createElement('span'); const i = document.createElement('i'); i.className = cls; s.append(i, document.createTextNode(text)); el.append(s); };
   if (!k){ item('mk-none', 'Entrance and boss positions are only known for the reference layouts.'); return; }
+  if (!spawnCount) item('mk-route', 'Clear route: run a simulation first');
+  else if (hasRoute){
+    item('mk-route', 'Clear route · ' + Math.round((routeCovered || 0) * 100) + '% of spawns');
+    if (routeRetrace) item('mk-retrace', 'Already cleared');
+  }
   item('mk-portal', k.entrance ? (k.entrance.source === 'portal' ? 'Entrance portal' : 'Entrance (arrival point)') : 'No entrance recorded');
   item(inferred ? 'mk-boss mk-inferred' : 'mk-boss', !bosses.length ? 'Boss position unknown: no single boss spawn point in this map file'
     : inferred ? 'Boss spawn point (inferred from the map file): ' + bosses.join(', ') : 'Boss: ' + bosses.join(', '));
 }
-window.drawMapMarkers = function(ctx, m, ox, oy, scale){
-  legend(m);
-  const k = m && !m.custom_geometry && window.PD2MapMarkers && window.PD2MapMarkers[m.id]; if (!k) return;
+function strokeRoute(ctx, route, ox, oy, scale, width, colorOf){
+  ctx.lineWidth = width;
+  let i = 1;
+  while (i < route.length){
+    const retrace = !!route[i].retrace;
+    ctx.beginPath();
+    ctx.strokeStyle = colorOf(retrace);
+    ctx.moveTo(ox + route[i - 1].x * scale, oy + route[i - 1].y * scale);
+    while (i < route.length && !!route[i].retrace === retrace){
+      ctx.lineTo(ox + route[i].x * scale, oy + route[i].y * scale);
+      i++;
+    }
+    ctx.stroke();
+  }
+}
+window.drawMapMarkers = function(ctx, m, ox, oy, scale, spawns){
+  const k = m && !m.custom_geometry && window.PD2MapMarkers && window.PD2MapMarkers[m.id];
+  const route = k && window.PD2ClearRoute ? window.PD2ClearRoute(m, k.entrance, k.boss && k.boss[0], spawns) : [];
+  legend(m, route.length > 1, route.covered, spawns ? spawns.length : 0, route.some(point => point.retrace));
+  if (!k) return;
   const at = p => [ox + (p.x + .5) * scale, oy + (p.y + .5) * scale];
   const showNames = scale >= 1.6;
+  if (route.length > 1){
+    const group = window.PD2ClearSettings ? window.PD2ClearSettings().radius : 35;
+    const bar = group * 2 * scale;
+    const core = Math.max(1.25, scale * 1.05);
+    ctx.save();
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    strokeRoute(ctx, route, ox, oy, scale, bar + Math.max(2, scale * 1.5), retrace => retrace ? 'rgba(20,40,70,.55)' : 'rgba(0,0,0,.45)');
+    strokeRoute(ctx, route, ox, oy, scale, bar, retrace => retrace ? 'rgba(90,160,220,.38)' : 'rgba(226,59,46,.32)');
+    strokeRoute(ctx, route, ox, oy, scale, core, retrace => retrace ? '#7eb6ff' : '#ff4d3a');
+    ctx.restore();
+  }
   if (k.entrance){ const [x, y] = at(k.entrance), r = clamp(scale * 5, 7, 20); portal(ctx, x, y, r); if (showNames) label(ctx, 'Entrance', x + r * .8 + 5, y); }
   for (const b of k.boss){ const [x, y] = at(b), r = clamp(scale * 4.5, 7, 18); skull(ctx, x, y, r, b.inferred); if (showNames) label(ctx, b.name, x + r + 5, y); }
 };
+function bindClearControls(){
+  const refresh = () => {
+    if (typeof repaint === 'function') repaint();
+    const loot = document.getElementById('lootPanel');
+    if (loot && !loot.hidden && typeof drawMap === 'function') drawMap();
+  };
+  for (const id of ['clearTarget', 'clearRadius']) document.getElementById(id)?.addEventListener('input', refresh);
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindClearControls);
+else bindClearControls();
 })();

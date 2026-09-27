@@ -14,8 +14,12 @@ python patch/patch.py new.bin      # patch a fresh build from the simulator sour
 It writes `simulator.bin` and bumps the `?v=` version in `index.html`. Every replacement must match exactly, so a
 build that changed underneath it stops with an error instead of half-applying.
 
-Boss and entrance positions come from each layout's DS1 presets. To regenerate `patch/markers.json` (needs the
-installed PD2 data and the map_compare tools; paths are at the top of the script):
+Boss and entrance positions come from each layout's DS1 presets. The clear route is drawn on that same map.
+Spawn clear is how many of the simulated monsters the group must kill. Group size is the width of the
+bar drawn around the route, and a monster inside that bar counts as killed. Walking while touching a
+fresh monster takes no time. Walking beside a stretch the group has already covered is heavily penalized.
+To regenerate `patch/markers.json` (needs the installed PD2 data and the map_compare tools; paths are at the
+top of the script):
 
 ```
 python patch/markers.py [new.bin]

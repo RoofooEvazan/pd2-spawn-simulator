@@ -13,6 +13,7 @@ half-applying. Inputs, all in this folder:
     theme.css, corners.css   stylesheet (corner ornaments copied from the IAS Calculator)
     skin.js                  life/mana globes, stone texture and embers (from the IAS Calculator)
     markers.json, markers.js boss and entrance positions and their drawing; rebuild markers.json with markers.py
+    route.js                 walking clear drawn on the same map, from the entrance through the corridors to the boss
 """
 import argparse, gzip, hashlib, re, subprocess
 from pathlib import Path
@@ -78,12 +79,18 @@ markup = markup[:m.start()] + ('<main>\n<header class="page-head">'
     '<p class="eyebrow">Spawn research lab · experimental model</p>' + m.group(1) +
     '<div class="rune-rule" aria-hidden="true"></div></header>') + markup[m.end():]
 
+# ---- walking clear: target percent and the radius the group clears around the route
+markup = rep(markup, '<label>Map<select id="map"></select></label><label>Layout<select id="layout"></select></label>',
+    '<label>Map<select id="map"></select></label><label>Layout<select id="layout"></select></label>'
+    '<label>Spawn clear (%)<input id="clearTarget" type="number" min="1" max="100" step="1" value="90"></label>'
+    '<label>Group size (subtiles)<input id="clearRadius" type="number" min="1" max="200" step="1" value="35"></label>', where='clear controls')
+
 # ---- boss and entrance markers (markers.py reads them from the installed DS1 presets)
 markup = rep(markup, '<canvas id="terrain" tabindex="0" aria-label="Map terrain with illustrative monster pack placement"></canvas>',
-    '<canvas id="terrain" tabindex="0" aria-label="Map terrain with illustrative monster pack placement, the entrance portal and the map boss"></canvas>'
+    '<canvas id="terrain" tabindex="0" aria-label="Map terrain with illustrative monster pack placement, the clear route, the entrance portal and the map boss"></canvas>'
     '<p id="mapMarkerLegend" class="map-legend" role="note"></p>', where='legend')
 markup += ('<script>window.PD2MapMarkers=' + read('markers.json') + ';</script>\n'
-           '<script>' + read('markers.js') + '</script>\n')
+           '<script>' + read('route.js') + '\n' + read('markers.js') + '</script>\n')
 
 # ---- workspace / developer style blocks
 for old, new in [
@@ -126,7 +133,7 @@ for i, line in enumerate(lines):
 draw_end = "role==='unique'?'#e6d39a':'#f4efe4';ctx.lineWidth=1;ctx.stroke()}}}"
 n = sum(l.count(draw_end) for l in lines if len(l) <= 5000)
 if n != 1: raise SystemExit(f'map draw end found {n} times')
-lines = [l.replace(draw_end, draw_end[:-1] + 'window.drawMapMarkers&&drawMapMarkers(ctx,m,ox,oy,scale)}') if len(l) <= 5000 else l for l in lines]
+lines = [l.replace(draw_end, draw_end[:-1] + 'window.drawMapMarkers&&drawMapMarkers(ctx,m,ox,oy,scale,points)}') if len(l) <= 5000 else l for l in lines]
 missing = [k for k, v in hits.items() if not v]
 if missing: raise SystemExit(f'main code swaps not found: {missing}')
 main_script = '\n'.join(lines)
@@ -141,7 +148,7 @@ for old, new in [
     ('.q-normal,.q-superior{color:#e7f0f4}', '.q-normal,.q-superior{color:#dcd6c6}'), ('.q-low{color:#8a96a0}', '.q-low{color:#6f685b}'),
     ('.q-gold{color:#f6c975}', '.q-gold{color:#e6d39a}'), ('.q-potion{color:#a6bbc7}', '.q-potion{color:#8f8775}'),
     ('linear-gradient(90deg,#b3372e,#f6c975)', 'linear-gradient(90deg,#b3372e,#e6d39a)'),
-    ('  ctx.globalAlpha = 1;\n  if (!last) return;', '  ctx.globalAlpha = 1;\n  if (window.drawMapMarkers) drawMapMarkers(ctx, m, ox, oy, scale);\n  if (!last) return;'),
+    ('  ctx.globalAlpha = 1;\n  if (!last) return;', '  ctx.globalAlpha = 1;\n  if (window.drawMapMarkers) drawMapMarkers(ctx, m, ox, oy, scale, mobs);\n  if (!last) return;'),
 ]:
     if old not in loot: raise SystemExit(f'loot: {old!r} not found')
     loot = loot.replace(old, new)
