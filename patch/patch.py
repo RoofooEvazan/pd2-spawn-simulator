@@ -33,7 +33,7 @@ s = gzip.decompress(base).decode('utf-8')
 theme = read('theme.css') + '\n' + read('corners.css') + '\n'
 theme += '.sort-button,.mob-toggle,.linkish{box-shadow:none!important;text-shadow:none!important;filter:none!important;font-family:inherit!important;letter-spacing:0!important;transform:none!important}\n'
 theme += '.tabs button{width:auto}\n'
-# Tristram panels: a stone sheet with gold and soot edges, no gilded corners
+# Chaos panels: obsidian sheets edged in brass, no gilded corners
 theme += '.card{background:color-mix(in srgb,var(--tri-panel) 95%,transparent);border:1px solid var(--tri-line);box-shadow:inset 0 4px 0 var(--tri-gold),inset 0 -4px 0 var(--tri-shadow),0 14px 40px rgba(0,0,0,.55)}.card::before{display:none}\n'
 skin = read('skin.js')
 
@@ -53,11 +53,11 @@ main_script, tail = rest[:main_end], rest[main_end:]
 markup = rep(markup, '<title>PD2 · Spawn research lab</title>',
     '<title>PD2 Spawn Simulator</title>\n<link rel="preconnect" href="https://fonts.googleapis.com">\n'
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
-    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Cinzel:wght@500;700&family=Silkscreen:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">', where='title')
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Cinzel:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">', where='title')
 a = markup.index('<style>') + len('<style>')
 b = markup.index('</style>', a)
 markup = markup[:a] + theme + markup[b:]
-# the Tristram theme shared with the other tools, after the tool's own sheet
+# the Chaos theme shared with the other tools, after the tool's own sheet
 b = markup.index('</style>', a) + len('</style>')
 markup = markup[:b] + ('\n<link rel="stylesheet" href="https://roofooevazan.github.io/assets/tristram.css">'
     '\n<link rel="stylesheet" href="https://roofooevazan.github.io/assets/tristram-tools.css">') + markup[b:]
